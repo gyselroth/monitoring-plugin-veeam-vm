@@ -1,3 +1,10 @@
+#
+# Check veeam backup status
+#
+# Raffael Sahli <sahli@gyselroth.com>
+# gyselroth GmbH, 2017
+#
+
 param (
    [string]$vm=$FALSE,
    [string]$warning=86400,
