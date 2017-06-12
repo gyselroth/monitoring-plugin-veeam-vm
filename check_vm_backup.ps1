@@ -1,8 +1,8 @@
 #
 # Check veeam backup status
 #
-# Raffael Sahli <sahli@gyselroth.com>
-# gyselroth GmbH, 2017
+# @author  Raffael Sahli <sahli@gyselroth.com>
+# @license MIT, gyselroth GmbH 2017
 #
 
 param (
