@@ -22,6 +22,7 @@ $now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
 
 foreach($job in (Get-VBRJob)) {
     $session = $job.FindLastSession()
+
     if(!$session) {
         continue;
     }
@@ -29,23 +30,43 @@ foreach($job in (Get-VBRJob)) {
     $object = $Session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
     
     if($object) {
-        $time=$session.EndTime
-
-        if($object.Status -ne "Success") {
+        $time=$session.CreationTime
+        
+        if($object.Status -ne "Success" -and $object.Status -ne "InProgress" -and $object.Status -ne "Pending") {
+            echo $session
+            echo $object
+            
             echo "vm backup $vm failed with status $object.Status in backup job $job.Name at $time"
             exit 2
         }
-                $ts=[Math]::Floor([decimal](Get-Date($time).ToUniversalTime()-uformat "%s"))
+                
+        $ts=[Math]::Floor([decimal](Get-Date($time).ToUniversalTime()-uformat "%s"))
         $diff = $now-$ts
         
         if($diff -ge $warning -and $diff -le $critical) {
-            echo "vm backup $vm is warning, last backup at $time"
+            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
+                echo "vm backup $vm is warning, backup is still in progress started at $time"
+            } else {
+                echo "vm backup $vm is warning, last backup at $time"
+            }
+            
             exit 1
         } elseif($diff -ge $critical) {
-            echo "vm backup $vm is critical, last backup at $time"
+            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
+                echo "vm backup $vm is critical, backup is still in progress started at $time"
+
+            } else {
+                echo "vm backup $vm is critical, last backup at $time"
+            }
+            
             exit 2
         } else {
-            echo "vm backup $vm is ok, last backup at $time"            
+            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
+                echo "vm backup $vm is ok, backup ist currently in progress started at $time"
+            } else {
+                echo "vm backup $vm is ok, last backup at $time"            
+            }
+        
             exit 0
         }
     }
