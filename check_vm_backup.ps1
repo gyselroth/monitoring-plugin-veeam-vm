@@ -33,9 +33,6 @@ foreach($job in (Get-VBRJob)) {
         $time=$session.CreationTime
         
         if($object.Status -ne "Success" -and $object.Status -ne "InProgress" -and $object.Status -ne "Pending") {
-            echo $session
-            echo $object
-            
             echo "vm backup $vm failed with status $object.Status in backup job $job.Name at $time"
             exit 2
         }
