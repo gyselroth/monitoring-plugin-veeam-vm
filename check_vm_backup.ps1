@@ -8,7 +8,8 @@
 param (
    [string]$vm=$FALSE,
    [string]$warning=86400,
-   [string]$critical=172800
+   [string]$critical=172800,
+   [string]$type="Backup"
 )
 
 asnp "VeeamPSSnapIn" -ErrorAction SilentlyContinue
@@ -18,9 +19,14 @@ if($vm -eq $FALSE) {
     exit 3
 }
 
+if($vm -eq $FALSE) {
+    echo "param -type is missing and must be Backup or Backupsync"
+    exit 3
+}
+
 $now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
 
-foreach($job in (Get-VBRJob)) {
+foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
     $session = $job.FindLastSession()
 
     if(!$session) {
