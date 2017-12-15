@@ -39,7 +39,6 @@ foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
 
     $object = $session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
 
-
     if($object) {
         $time=$session.CreationTime
 
