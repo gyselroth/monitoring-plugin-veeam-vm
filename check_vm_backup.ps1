@@ -20,21 +20,31 @@ if($vm -eq $FALSE) {
 }
 
 if($vm -eq $FALSE) {
-    echo "param -type is missing and must be Backup or Backupsync"
+    echo "param -type is missing and must either be Backup or Copy. Leave it empty for Backupjobs"
+    exit 3
+}
+
+if($type -eq "Copy") {
+    $type="BackupSync"
+}
+
+if($type -ne "Backup" -and $type -ne "Backupsync") {
+    echo "parameter -type wrong, please check the spelling"
     exit 3
 }
 
 $now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
-
+ 
 foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
     $session = $job.FindLastSession()
 
     if(!$session) {
         continue;
     }
- 
-    $object = $Session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
-    
+
+    $object = $session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
+
+
     if($object) {
         $time=$session.CreationTime
 
