@@ -8,7 +8,8 @@
 param (
    [string]$vm=$FALSE,
    [string]$warning=86400,
-   [string]$critical=172800
+   [string]$critical=172800,
+   [string]$type="backup"
 )
 
 asnp "VeeamPSSnapIn" -ErrorAction SilentlyContinue
@@ -18,17 +19,26 @@ if($vm -eq $FALSE) {
     exit 3
 }
 
-$now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
+if($type -eq "copy") {
+    $type="backupsync"
+}
 
-foreach($job in (Get-VBRJob)) {
+if($type -ne "backup" -and $type -ne "backupsync") {
+    echo "param -type accepts backup or copy as value"
+    exit 3
+}
+
+$now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
+ 
+foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
     $session = $job.FindLastSession()
 
     if(!$session) {
         continue;
     }
- 
-    $object = $Session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
-    
+
+    $object = $session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
+
     if($object) {
         $time=$session.CreationTime
 
