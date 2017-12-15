@@ -19,17 +19,12 @@ if($vm -eq $FALSE) {
     exit 3
 }
 
-if($vm -eq $FALSE) {
-    echo "param -type is missing and must either be Backup or Copy. Leave it empty for Backupjobs"
-    exit 3
-}
-
 if($type -eq "copy") {
-    $type="backupSync"
+    $type="backupsync"
 }
 
 if($type -ne "backup" -and $type -ne "backupsync") {
-    echo "parameter -type wrong, please check the spelling"
+    echo "param -type accepts backup or copy as value"
     exit 3
 }
 
