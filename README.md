@@ -12,7 +12,7 @@ Monitor the backup status of a single machine made with veeam
       -vm       NAME of the machince to check (Not the job name)
       -warning  WARNING offset (s) of the successful backup end time [Default: 86400]
       -critical CRITICAL offset (s) of the successful backup end time [Default: 172800]
-	  -type     TYPE of Backup. Choose between Backup or Copy (Jobs) [Default: Backup]
+	  -type     TYPE of Backup. Choose between backup or copy (Jobs) [Default: backup]
 
 ### Requirements
     * Windows Server

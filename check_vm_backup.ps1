@@ -9,7 +9,7 @@ param (
    [string]$vm=$FALSE,
    [string]$warning=86400,
    [string]$critical=172800,
-   [string]$type="Backup"
+   [string]$type="backup"
 )
 
 asnp "VeeamPSSnapIn" -ErrorAction SilentlyContinue
@@ -24,11 +24,11 @@ if($vm -eq $FALSE) {
     exit 3
 }
 
-if($type -eq "Copy") {
-    $type="BackupSync"
+if($type -eq "copy") {
+    $type="backupSync"
 }
 
-if($type -ne "Backup" -and $type -ne "Backupsync") {
+if($type -ne "backup" -and $type -ne "backupsync") {
     echo "parameter -type wrong, please check the spelling"
     exit 3
 }
