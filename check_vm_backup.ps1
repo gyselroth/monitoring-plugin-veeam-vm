@@ -2,13 +2,15 @@
 # Check veeam backup status
 #
 # @author  Raffael Sahli <sahli@gyselroth.com>
-# @license MIT, gyselroth GmbH 2017
+# @license MIT, gyselroth GmbH 2017-2019
 #
 
 param (
    [string]$vm=$FALSE,
-   [string]$warning=86400,
-   [string]$critical=172800,
+   [string]$last_warn=86400,
+   [string]$last_crit=172800,
+   [string]$runtime_warn=10800,
+   [string]$runtime_crit=21600,
    [string]$type="backup"
 )
 
@@ -42,45 +44,40 @@ foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
     if($object) {
         $time=$session.CreationTime
 
-        if($object.Status -eq "Warning") {            
-            echo "vm backup $vm finished with warning in backup job $($job.Name) at $time"
-            exit 1
-        } elseif($object.Status -ne "Success" -and $object.Status -ne "InProgress" -and $object.Status -ne "Pending") {            
-            echo "vm backup $vm failed with status $($object.Status)) in backup job $($job.Name) at $time"
-            exit 2
-        }
-                
         $ts=[Math]::Floor([decimal](Get-Date($time).ToUniversalTime()-uformat "%s"))
         $diff = $now-$ts
-        
-        if($diff -ge $warning -and $diff -le $critical) {
-            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
-                echo "vm backup $vm is warning, backup is still in progress started at $time"
-            } else {
-                echo "vm backup $vm is warning, last backup at $time"
-            }
-            
-            exit 1
-        } elseif($diff -ge $critical) {
-            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
-                echo "vm backup $vm is critical, backup is still in progress started at $time"
-
-            } else {
-                echo "vm backup $vm is critical, last backup at $time"
-            }
-            
-            exit 2
-        } else {
-            if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
-                echo "vm backup $vm is ok, backup ist currently in progress started at $time"
-            } else {
-                echo "vm backup $vm is ok, last backup at $time"            
-            }
-        
-            exit 0
-        }
+		
+		if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
+			if($diff -ge $runtime_warn -and $diff -le $runtime_crit) {
+				echo "vm backup $vm is warning, backup is still in progress started at $time"
+				exit 1
+			} elseif($diff -ge $runtime_crit) {
+				echo "vm backup $vm is critical, backup is still in progress started at $time"				
+				exit 2
+			} else {
+				echo "vm backup $vm is still in progress started at $time"
+				exit 0
+			}
+		} elseif($object.Status -eq "Success" -or $object.Status -eq "Warning") {
+			if($diff -ge $last_warn -and $diff -le $last_crit) {
+				echo "vm backup $vm is warning, last backup at $time"
+				exit 1
+			} elseif($diff -ge $last_crit) {
+				echo "vm backup $vm is critical, last backup at $time"
+				exit 2
+			} else {
+				echo "vm backup $vm is ok, last backup at $time"            
+				exit 0
+			}
+		} elseif($object.Status -eq "Failed") {
+			echo "vm backup $vm is critical, last backup at $time"	
+			exit 2
+		} else {
+			echo "vm backup $vm is unknown, last backup at $time"
+			exit 3
+		}        
     }
 }
 
-echo "no backup found for vm $vm"
+echo "no backup session found for vm $vm"
 exit 2
