@@ -46,36 +46,36 @@ foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
 
         $ts=[Math]::Floor([decimal](Get-Date($time).ToUniversalTime()-uformat "%s"))
         $diff = $now-$ts
-		
-		if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
-			if($diff -ge $runtime_warn -and $diff -le $runtime_crit) {
-				echo "vm backup $vm is warning, backup is still in progress started at $time"
-				exit 1
-			} elseif($diff -ge $runtime_crit) {
-				echo "vm backup $vm is critical, backup is still in progress started at $time"				
-				exit 2
-			} else {
-				echo "vm backup $vm is still in progress started at $time"
-				exit 0
-			}
-		} elseif($object.Status -eq "Success" -or $object.Status -eq "Warning") {
-			if($diff -ge $last_warn -and $diff -le $last_crit) {
-				echo "vm backup $vm is warning, last backup at $time"
-				exit 1
-			} elseif($diff -ge $last_crit) {
-				echo "vm backup $vm is critical, last backup at $time"
-				exit 2
-			} else {
-				echo "vm backup $vm is ok, last backup at $time"            
-				exit 0
-			}
-		} elseif($object.Status -eq "Failed") {
-			echo "vm backup $vm is critical, last backup at $time"	
-			exit 2
-		} else {
-			echo "vm backup $vm is unknown, last backup at $time"
-			exit 3
-		}        
+        
+        if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
+            if($diff -ge $runtime_warn -and $diff -le $runtime_crit) {
+                echo "vm backup $vm is warning, backup is still in progress started at $time"
+                exit 1
+            } elseif($diff -ge $runtime_crit) {
+                echo "vm backup $vm is critical, backup is still in progress started at $time"              
+                exit 2
+            } else {
+                echo "vm backup $vm is still in progress started at $time"
+                exit 0
+            }
+        } elseif($object.Status -eq "Success" -or $object.Status -eq "Warning") {
+            if($diff -ge $last_warn -and $diff -le $last_crit) {
+                echo "vm backup $vm is warning, last backup at $time"
+                exit 1  
+            } elseif($diff -ge $last_crit) {
+                echo "vm backup $vm is critical, last backup at $time"
+                exit 2
+            } else {
+                echo "vm backup $vm is ok, last backup at $time"            
+                exit 0
+            }
+        } elseif($object.Status -eq "Failed") {
+            echo "vm backup $vm is critical, last backup at $time"  
+            exit 2
+        } else {
+            echo "vm backup $vm is unknown, last backup at $time"
+            exit 3
+        }        
     }
 }
 
