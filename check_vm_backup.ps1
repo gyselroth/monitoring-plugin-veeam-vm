@@ -31,53 +31,68 @@ if($type -ne "backup" -and $type -ne "backupsync") {
 }
 
 $now=[Math]::Floor([decimal](Get-Date(Get-Date).ToUniversalTime()-uformat "%s"))
- 
-foreach($job in (Get-VBRJob | ?{$_.JobType -eq $type})) {
-    $session = $job.FindLastSession()
+$last = ($last_crit / 60 / 24) * -1
 
-    if(!$session) {
-        continue;
-    }
+$last_status = 4;
+$last_session;
+$last_time;
 
+foreach($session in (Get-VBRBackupSession | Where-Object {$_.CreationTime -ge (Get-Date).addhours($last)} | Sort creationtime)) {
     $object = $session.GetTaskSessions() | Where-Object {$_.Name -eq $vm}
 
     if($object) {
         $time=$session.CreationTime
-
         $ts=[Math]::Floor([decimal](Get-Date($time).ToUniversalTime()-uformat "%s"))
         $diff = $now-$ts
-        
+		    $name = $session.name
+		
         if($object.Status -eq "InProgress" -or $object.Status -eq "Pending") {
             if($diff -ge $runtime_warn -and $diff -le $runtime_crit) {
-                echo "vm backup $vm is warning, backup is still in progress started at $time"
+                echo "vm backup $vm is warning, backup is still in progress started at $time from session $name"
                 exit 1
             } elseif($diff -ge $runtime_crit) {
-                echo "vm backup $vm is critical, backup is still in progress started at $time"              
+                echo "vm backup $vm is critical, backup is still in progress started at $time from session $name"              
                 exit 2
             } else {
-                echo "vm backup $vm is still in progress started at $time"
+                echo "vm backup $vm is still in progress started at $time from session $name"
                 exit 0
             }
         } elseif($object.Status -eq "Success" -or $object.Status -eq "Warning") {
             if($diff -ge $last_warn -and $diff -le $last_crit) {
-                echo "vm backup $vm is warning, last backup at $time"
-                exit 1  
+				        $temp = 0
             } elseif($diff -ge $last_crit) {
-                echo "vm backup $vm is critical, last backup at $time"
-                exit 2
+			  	      $temp = 0
             } else {
-                echo "vm backup $vm is ok, last backup at $time"            
-                exit 0
+				        $temp = 0
             }
         } elseif($object.Status -eq "Failed") {
-            echo "vm backup $vm is critical, last backup at $time"  
-            exit 2
+            $temp = 2
         } else {
-            echo "vm backup $vm is unknown, last backup at $time"
-            exit 3
+            $temp = 3
         }        
+
+		  if($temp -le $last_status) {
+			    $last_time = $time;
+			    $last_status = $temp;
+			    $last_session = $session.name
+		  }
     }
+}
+
+if($last_status -eq 1) {
+	  echo "vm backup $vm is warning, last backup at $time from session $last_session"
+	  exit 1
+} elseif($last_status -eq 2) {
+	  echo "vm backup $vm is critical, last backup at $time from session $last_session"
+	  exit 2
+} elseif($last_status -eq 0) {
+	  echo "vm backup $vm is ok, last backup at $time from session $last_session"            
+	  exit 0
+} elseif($last_status -eq 3) {
+	  echo "vm backup $vm is unknown, last backup at $time from session $last_session"            
+	  exit 3
 }
 
 echo "no backup session found for vm $vm"
 exit 2
+
